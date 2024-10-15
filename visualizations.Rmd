@@ -21,7 +21,7 @@ yearly_counts <- kauai_data %>%
   group_by(Year) %>%
   summarise(Count = n())
 ggplot(yearly_counts, aes(x = Year, y = Count)) +
-  geom_bar(stat = "identity", fill = "#FF6347", color = "black") +  # Using Tomato color
+  geom_bar(stat = "identity", fill = "#FF6347", color = "black") +  
   geom_text(aes(label = Count), vjust = -0.5, size = 5, color = "black") +  # Add count labels
   labs(title = "Number of Fires by Year 2000-2020",
        x = "Year",
