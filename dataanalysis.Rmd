@@ -26,6 +26,6 @@ df$Date <- as.Date(df$Date, format = "%Y-%m-%d")
 df$Date <- df$Date - 1
 ```
 ```{r}
-write.csv(df, "Kauai Data.csv")
+write.csv(df, "Kauai Data.csv", row.names = FALSE)
 ```
 
