@@ -92,4 +92,4 @@ ggplot(monthly_counts, aes(x = Month, y = Average_Fires)) +
   scale_y_continuous(expand = expansion(mult = c(0, 0.05)))
 ```
 
-hfhfj
+hf
