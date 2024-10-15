@@ -1,0 +1,28 @@
+---
+title: "dataanalysis"
+author: "Suheng Yao"
+date: "2024-10-15"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message=FALSE}
+library(dplyr)
+# Read in the data
+df <- read.csv("HI_State_Ignitions_All.csv")
+
+# Only select data associated with Kauai
+df <- df %>%
+  filter(County == "Kauai")
+```
+```{r}
+df$Date <- paste(df$Year, df$Month, df$Day, sep = "-")
+df <- df[, !names(df) %in% c("Day", "Month", "Year")]
+df <- df[, c("Date", setdiff(names(df), "Date"))]
+df$Date <- as.Date(df$Date, format = "%Y-%m-%d")
+df$Date <- df$Date - 1
+```
+
