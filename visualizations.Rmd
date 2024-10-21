@@ -8,6 +8,8 @@ output: html_document
 ```{r setup, include=FALSE}
 library(dplyr)
 library(ggplot2)
+library(ggmap)
+library(sf)
 kauai_data = read.csv("Kauai Data.csv")
 all_data = read.csv("HI_State_Ignitions_ALL.csv")
 kauai_data$Date = as.Date(kauai_data$Date)
@@ -68,7 +70,7 @@ monthly_counts <- kauai_data %>%
   mutate(Month = format(Date, "%m")) %>%  # Create a Month column (numeric)
   group_by(Month) %>%
   summarise(Total_Fires = n()) %>%  # Count fires per month
-  mutate(Average_Fires = Total_Fires / length(unique(format(kauai_data$Date, "%Y"))))  # Average fires per month
+  mutate(Average_Fires = round(Total_Fires / length(unique(format(kauai_data$Date, "%Y"))), 2))  # Average fires per month
 
 # Create a factor for Month to maintain order
 monthly_counts$Month <- factor(monthly_counts$Month, levels = c("01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"),
@@ -78,18 +80,55 @@ labels = c("January", "February", "March", "April", "May", "June",
 # Create the plot
 ggplot(monthly_counts, aes(x = Month, y = Average_Fires)) +
   geom_bar(stat = "identity", fill = "#FF6347", color = "black") +  # Bar chart for average fires
+  geom_text(aes(label = Average_Fires), vjust = -0.5, size = 3, 
+            color = "black") +
   labs(title = "Average Number of Fires per Month",
        x = "Month",
        y = "Average Number of Fires") +
   theme_minimal() +
   theme(
     plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
-    axis.title.x = element_text(size = 14),
-    axis.title.y = element_text(size = 14),
+    axis.title.x = element_text(size = 12),
+    axis.title.y = element_text(size = 12),
+    axis.text.x = element_text(angle = 45, hjust = 1),
     panel.grid.major = element_line(color = "lightgray"),
     panel.grid.minor = element_blank()
   ) +
   scale_y_continuous(expand = expansion(mult = c(0, 0.05)))
 ```
+```{r}
+fire_dist_month <- kauai_data %>%
+  
+ggplot(monthly_counts, aes(x = Month, y = Fires)) +
+  geom_boxplot(fill = "#FF6347", color = "black") +  # Boxplot for fires
+  labs(title = "Distribution of Fires per Month",
+       x = "Month",
+       y = "Number of Fires") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    axis.title.x = element_text(size = 12),
+    axis.title.y = element_text(size = 12),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid.major = element_line(color = "lightgray"),
+    panel.grid.minor = element_blank()
+  ) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.05)))
+```
+```{r}
 
-hf
+register_google(key = "AIzaSyBZLfJLv6FbqwjkkzLNeVt3H5LO35g0v20")
+
+base_map <- get_map(location = c(lon = -159.6893, lat = 22.01891), zoom = 10, maptype = "terrain")
+
+specific_location <- kauai_data %>% 
+  filter(Date == "2019-06-18")
+specific_location <- specific_location[2, ]
+
+# Plot the data on the map
+ggmap(base_map) +
+  geom_point(aes(x = Longitude, y = Latitude), data = specific_location, color = "red", size = 5) +
+  labs(title = "Fire Events", x = "Longitude", y = "Latitude")
+
+```
+
