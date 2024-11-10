@@ -14,7 +14,7 @@ library(ggplot2)
 ```{r, message=FALSE}
 library(dplyr)
 # Read in the data
-df <- read.csv("HI_State_Ignitions_All.csv")
+df <- read.csv("data/HI_State_Ignitions_All.csv")
 
 # Only select data associated with Kauai
 df <- df %>%
