@@ -8,6 +8,7 @@ output: pdf_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
+library(ggplot2)
 ```
 
 ```{r, message=FALSE}
@@ -29,7 +30,7 @@ df$Date <- df$Date - 1
 ```{r}
 write.csv(df, "Kauai Data.csv", row.names = FALSE)
 ```
-```{r}
+```{r, warning=FALSE}
 # Read the first row (variable names)
 headers <- read.csv("PHBK.2020-12-31.csv", nrows = 1, header = FALSE)
 # Read the second row (units)
@@ -45,10 +46,38 @@ df_phbk <- read.csv("PHBK.2020-12-31.csv", skip = 2, col.names = new_headers)
 glimpse(df_phbk)
 colSums(is.na(df_phbk))
 ```
+
 ## Start Data Cleaning
 ```{r, warning=FALSE}
 df_phbk$sea_level_pressure_set_1d...Pascals.. <- as.numeric(df_phbk$sea_level_pressure_set_1d...Pascals..)
 
+df_phbk$Date_Time...NA.. <- as.POSIXct(df_phbk$Date_Time...NA.., format="%Y-%m-%dT%H:%M:%SZ")
 
+# Remove the columns with more than 100,000 NA values
+df_phbk <- df_phbk[, colSums(is.na(df_phbk)) < 100000]
 ```
 
+```{r}
+# Merge the df and df_phbk
+# First make the date in the same format
+df_phbk$Date_Time...NA.. <- as.Date(df_phbk$Date_Time...NA..)
+df_phbk <- df_phbk %>%
+  rename(Date=Date_Time...NA..)
+# Merge based on date
+merge_df <- merge(df, df_phbk, by="Date", all=FALSE)
+```
+```{r}
+merge_df <- merge_df %>%
+  filter(!is.na(air_temp_set_1...Celsius..))
+
+ggplot(merge_df, aes(x=Date, y=air_temp_set_1...Celsius..))+
+  geom_line()+
+  theme_minimal()
+```
+```{r}
+merge1 <- merge_df %>%
+  filter((air_temp_set_1...Celsius.. < -10) | 
+           (air_temp_set_1...Celsius.. > 40))
+```
+
+# find data in other stations, find possible missing pattern, find meaning of each variable
