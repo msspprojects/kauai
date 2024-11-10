@@ -28,19 +28,19 @@ df$Date <- as.Date(df$Date, format = "%Y-%m-%d")
 df$Date <- df$Date - 1
 ```
 ```{r}
-write.csv(df, "Kauai Data.csv", row.names = FALSE)
+write.csv(df, "data/Kauai Data.csv", row.names = FALSE)
 ```
 ```{r, warning=FALSE}
 # Read the first row (variable names)
-headers <- read.csv("PHBK.2020-12-31.csv", nrows = 1, header = FALSE)
+headers <- read.csv("data/PHBK.2020-12-31.csv", nrows = 1, header = FALSE)
 # Read the second row (units)
-units <- read.csv("PHBK.2020-12-31.csv", skip = 1, nrows = 1, header = FALSE)
+units <- read.csv("data/PHBK.2020-12-31.csv", skip = 1, nrows = 1, header = FALSE)
 
 # Combine headers and units
 new_headers <- paste(headers, "(", units, ")")
 
 # Read the actual data with new combined headers
-df_phbk <- read.csv("PHBK.2020-12-31.csv", skip = 2, col.names = new_headers)
+df_phbk <- read.csv("data/PHBK.2020-12-31.csv", skip = 2, col.names = new_headers)
 ```
 ```{r}
 glimpse(df_phbk)

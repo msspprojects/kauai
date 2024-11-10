@@ -1,0 +1,52 @@
+---
+title: "Find the closest station to each fire"
+author: "Suheng Yao"
+date: "2024-11-10"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readxl)
+library(dplyr)
+library(sf)
+```
+
+```{r}
+df <- read.csv("../data/Kauai Data.csv")
+df1 <- read_excel("../data/stationdata.xlsx")
+```
+
+```{r}
+df <- df %>%
+  arrange(desc(Acres)) %>%
+  select(c(Date, Latitude, Longitude, Acres))
+
+df <- df[1:6,]
+```
+
+```{r}
+# Convert fire events to spatial points
+fires_sf <- st_as_sf(df, coords = c("Longitude", "Latitude"), crs = 4326)
+
+# Convert weather stations to spatial points
+stations_sf <- st_as_sf(df1, coords = c("Lon", "Lat"), crs = 4326)
+
+# Find the index of the nearest station for each fire event
+nearest_indices <- st_nearest_feature(fires_sf, stations_sf)
+
+# Get nearest station details for each fire
+nearest_stations <- df1[nearest_indices, ]
+
+nearest_stations_sf <- stations_sf[nearest_indices, ]
+
+# Calculate the distance between each fire and its nearest station
+distances_to_nearest <- st_distance(fires_sf, nearest_stations_sf, by_element = TRUE)
+
+# Combine the fire events with their nearest stations and distances
+result <- cbind(df, nearest_stations, distance_to_nearest_station = as.numeric(distances_to_nearest))
+
+
+print(result)
+```
+
