@@ -13,21 +13,19 @@ library(sf)
 ```
 
 ```{r}
-df <- read.csv("../data/Kauai Data.csv")
+df <- read.csv("../data/fires_range(in).csv")
 df1 <- read_excel("../data/stationdata.xlsx")
 ```
 
 ```{r}
 df <- df %>%
-  arrange(desc(Acres)) %>%
-  select(c(Date, Latitude, Longitude, Acres))
-
-df <- df[1:6,]
+  arrange(desc(acres)) %>%
+  select(c(lattitude, longitude, acres))
 ```
 
 ```{r}
 # Convert fire events to spatial points
-fires_sf <- st_as_sf(df, coords = c("Longitude", "Latitude"), crs = 4326)
+fires_sf <- st_as_sf(df, coords = c("longitude", "lattitude"), crs = 4326)
 
 # Convert weather stations to spatial points
 stations_sf <- st_as_sf(df1, coords = c("Lon", "Lat"), crs = 4326)

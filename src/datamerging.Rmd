@@ -1,0 +1,92 @@
+---
+title: "datamerging"
+author: "Suheng Yao"
+date: "2024-11-23"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggmap)
+library(sf)
+```
+
+```{r}
+df <- read.csv("../data/fires_range(in).csv")
+PHLI <- read.csv("../data/PHLI.2020-12-31.csv")
+POPH1 <- read.csv("../data/POPH1.2024-11-22.csv")
+PLRH1 <- read.csv("../data/PLRH1.2024-11-22.csv")
+WHGH1 <- read.csv("../data/WHGH1.2020-12-31.csv")
+MKAH1 <- read.csv("../data/MKAH1.2024-11-22.csv")
+```
+
+```{r}
+df <- head(df, -1)
+df <- df %>%
+  select(-location) %>%
+  arrange(desc(acres))
+df$closest_station <- c("POPH1", "PLRH1", "WHGH1", "PHLI", "WHGH1", 
+                        "MKAH1", "WHGH1")
+```
+```{r}
+filter_data_by_date_range <- function(data, start_date, end_date) {
+  data <- data %>%
+    mutate(Date_Time = as.POSIXct(Date_Time, 
+                                  format = "%Y-%m-%dT%H:%M:%OSZ", 
+                                  tz = "UTC"))
+  start_date <- as.POSIXct(start_date, tz = "UTC")
+  end_date <- as.POSIXct(end_date, tz = "UTC")
+  
+  filtered_data <- data %>%
+    filter(Date_Time >= start_date & Date_Time <= end_date)
+  if(start_date == end_date){
+    filtered_data <- data %>%
+    filter(as.Date(Date_Time) == as.Date(start_date))
+  }
+  
+  return(filtered_data)
+}
+
+id3_fire <- filter_data_by_date_range(POPH1, "2012-08-17", "2012-08-22")
+id2_fire <- filter_data_by_date_range(PLRH1, "2012-06-25", "2012-07-04")
+id6_fire <- filter_data_by_date_range(WHGH1, "2017-05-04", "2017-05-18")
+id7_fire <- filter_data_by_date_range(PHLI, "2019-06-11", "2019-06-12")
+id5_fire <- filter_data_by_date_range(WHGH1, "2015-06-05", "2015-06-09")
+id1_fire <- filter_data_by_date_range(MKAH1, "2012-05-28", "2012-06-05")
+id4_fire <- filter_data_by_date_range(WHGH1, "2015-03-23", "2015-03-23")
+id3_fire <- id3_fire %>% mutate(ID = 3)
+id2_fire <- id2_fire %>% mutate(ID = 2)
+id6_fire <- id6_fire %>% mutate(ID = 6)
+id7_fire <- id7_fire %>% mutate(ID = 7)
+id5_fire <- id5_fire %>% mutate(ID = 5)
+id1_fire <- id1_fire %>% mutate(ID = 1)
+id4_fire <- id4_fire %>% mutate(ID = 4)
+all_weather_data <- bind_rows(id3_fire, id2_fire, id6_fire, 
+                              id7_fire, id5_fire, id1_fire, id4_fire)
+df <- left_join(all_weather_data, df, by="ID")
+df <- df %>%
+  rename(fire_event_ID = ID) %>%
+  select(fire_event_ID, everything())
+```
+```{r}
+colSums(is.na(df))
+```
+```{r}
+df <- df[, colSums(is.na(df)) < 1000]
+colSums(is.na(df))
+```
+```{r}
+register_google(key = "AIzaSyBZLfJLv6FbqwjkkzLNeVt3H5LO35g0v20")
+
+base_map <- get_map(location = c(lon = -159.55, lat = 22.05), zoom = 11, maptype = "terrain")
+
+specific_location <- df %>%
+  distinct(lattitude, longitude)
+
+# Plot the data on the map
+ggmap(base_map) +
+  geom_point(aes(x = longitude, y = lattitude), data = specific_location, color = "red", size = 3) +
+  labs(title = "Fire Events", x = "Longitude", y = "Latitude")
+```
+
