@@ -10,6 +10,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
 library(ggmap)
 library(sf)
+library(gridExtra)
+library(plotly)
 ```
 
 ```{r}
@@ -48,12 +50,12 @@ filter_data_by_date_range <- function(data, start_date, end_date) {
   return(filtered_data)
 }
 
-id3_fire <- filter_data_by_date_range(POPH1, "2012-08-17", "2012-08-22")
-id2_fire <- filter_data_by_date_range(PLRH1, "2012-06-25", "2012-07-04")
-id6_fire <- filter_data_by_date_range(WHGH1, "2017-05-04", "2017-05-18")
-id7_fire <- filter_data_by_date_range(PHLI, "2019-06-11", "2019-06-12")
-id5_fire <- filter_data_by_date_range(WHGH1, "2015-06-05", "2015-06-09")
-id1_fire <- filter_data_by_date_range(MKAH1, "2012-05-28", "2012-06-05")
+id3_fire <- filter_data_by_date_range(POPH1, "2012-08-17", "2012-08-23")
+id2_fire <- filter_data_by_date_range(PLRH1, "2012-06-25", "2012-07-05")
+id6_fire <- filter_data_by_date_range(WHGH1, "2017-05-04", "2017-05-19")
+id7_fire <- filter_data_by_date_range(PHLI, "2019-06-11", "2019-06-13")
+id5_fire <- filter_data_by_date_range(WHGH1, "2015-06-05", "2015-06-10")
+id1_fire <- filter_data_by_date_range(MKAH1, "2012-05-28", "2012-06-06")
 id4_fire <- filter_data_by_date_range(WHGH1, "2015-03-23", "2015-03-23")
 id3_fire <- id3_fire %>% mutate(ID = 3)
 id2_fire <- id2_fire %>% mutate(ID = 2)
@@ -88,5 +90,55 @@ specific_location <- df %>%
 ggmap(base_map) +
   geom_point(aes(x = longitude, y = lattitude), data = specific_location, color = "red", size = 3) +
   labs(title = "Fire Events", x = "Longitude", y = "Latitude")
+```
+
+# EDA
+```{r}
+plot_list <- list()
+for (i in c(1:7)) {
+  id_temp <- df %>%
+    filter(fire_event_ID == i)
+
+  p <- ggplot(id_temp, aes(x = Date_Time, y = air_temp_set_1)) +
+          geom_line(size = 1) +
+          labs(title = paste("Temperature for Fire Event", i),
+               x = "Date Time",
+               y = "Temperature") +
+          theme_minimal()
+  plot_list[[i]] <- p
+}
+do.call(grid.arrange, c(plot_list, ncol = 2))
+```
+```{r}
+plot_list <- list()
+for (i in c(1:7)) {
+  id_temp <- df %>%
+    filter(fire_event_ID == i)
+
+  p <- ggplot(id_temp, aes(x = Date_Time, y = relative_humidity_set_1)) +
+          geom_line(size = 1) +
+          labs(title = paste("Relative Humidity for Fire Event", i),
+               x = "Date Time",
+               y = "Humidity") +
+          theme_minimal()
+  plot_list[[i]] <- p
+}
+do.call(grid.arrange, c(plot_list, ncol = 2))
+```
+```{r}
+plot_list <- list()
+for (i in c(1:7)) {
+  id_temp <- df %>%
+    filter(fire_event_ID == i)
+
+  p <- ggplot(id_temp, aes(x = Date_Time, y = wind_speed_set_1)) +
+          geom_line(size = 1) +
+          labs(title = paste("Wind Speed for Fire Event", i),
+               x = "Date Time",
+               y = "Speed") +
+          theme_minimal()
+  plot_list[[i]] <- p
+}
+do.call(grid.arrange, c(plot_list, ncol = 2))
 ```
 
