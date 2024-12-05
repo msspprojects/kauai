@@ -141,4 +141,4 @@ for (i in c(1:7)) {
 }
 do.call(grid.arrange, c(plot_list, ncol = 2))
 ```
-
+add some weather data before fire date, add average weather information for the last five years for the specific month

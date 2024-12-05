@@ -3,3 +3,4 @@
 .RData
 .Ruserdata
 *.2020-12-31.csv
+.DS_Store
