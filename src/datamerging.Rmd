@@ -12,6 +12,7 @@ library(ggmap)
 library(sf)
 library(gridExtra)
 library(plotly)
+library(lubridate)
 ```
 
 ```{r}
@@ -50,13 +51,13 @@ filter_data_by_date_range <- function(data, start_date, end_date) {
   return(filtered_data)
 }
 
-id3_fire <- filter_data_by_date_range(POPH1, "2012-08-17", "2012-08-23")
-id2_fire <- filter_data_by_date_range(PLRH1, "2012-06-25", "2012-07-05")
-id6_fire <- filter_data_by_date_range(WHGH1, "2017-05-04", "2017-05-19")
-id7_fire <- filter_data_by_date_range(PHLI, "2019-06-11", "2019-06-13")
-id5_fire <- filter_data_by_date_range(WHGH1, "2015-06-05", "2015-06-10")
-id1_fire <- filter_data_by_date_range(MKAH1, "2012-05-28", "2012-06-06")
-id4_fire <- filter_data_by_date_range(WHGH1, "2015-03-23", "2015-03-23")
+id3_fire <- filter_data_by_date_range(POPH1, "2012-08-07", "2012-08-23")
+id2_fire <- filter_data_by_date_range(PLRH1, "2012-06-15", "2012-07-05")
+id6_fire <- filter_data_by_date_range(WHGH1, "2017-04-24", "2017-05-19")
+id7_fire <- filter_data_by_date_range(PHLI, "2019-06-01", "2019-06-13")
+id5_fire <- filter_data_by_date_range(WHGH1, "2015-05-25", "2015-06-10")
+id1_fire <- filter_data_by_date_range(MKAH1, "2012-05-18", "2012-06-06")
+id4_fire <- filter_data_by_date_range(WHGH1, "2015-03-13", "2015-03-23")
 id3_fire <- id3_fire %>% mutate(ID = 3)
 id2_fire <- id2_fire %>% mutate(ID = 2)
 id6_fire <- id6_fire %>% mutate(ID = 6)
@@ -93,52 +94,94 @@ ggmap(base_map) +
 ```
 
 # EDA
+## Calculate the Monthly Mean Temperature for Five Years Before Each Fire Event
 ```{r}
-plot_list <- list()
+MKAH1_5 <- MKAH1 %>%
+  mutate(Date_Time = as.POSIXct(Date_Time, format = "%Y-%m-%dT%H:%M:%OSZ", tz = "UTC")) %>% # Convert to POSIXct
+  filter(year(Date_Time) >= 2007 & year(Date_Time) <= 2011, # Filter years between 2007 and 2012
+         month(Date_Time) == 5) # Filter only for May
+
+PLRH1_6 <- PLRH1 %>%
+  mutate(Date_Time = as.POSIXct(Date_Time, format = "%Y-%m-%dT%H:%M:%OSZ", tz = "UTC")) %>% # Convert to POSIXct
+  filter(year(Date_Time) >= 2007 & year(Date_Time) <= 2011,
+         month(Date_Time) == 6)
+
+POPH1_8 <- POPH1 %>%
+  mutate(Date_Time = as.POSIXct(Date_Time, format = "%Y-%m-%dT%H:%M:%OSZ", tz = "UTC")) %>% # Convert to POSIXct
+  filter(year(Date_Time) >= 2007 & year(Date_Time) <= 2011,
+         month(Date_Time) == 8)
+
+WHGH1_3 <- WHGH1 %>%
+  mutate(Date_Time = as.POSIXct(Date_Time, format = "%Y-%m-%dT%H:%M:%OSZ", tz = "UTC")) %>% # Convert to POSIXct
+  filter(year(Date_Time) >= 2010 & year(Date_Time) <= 2014,
+         month(Date_Time) == 3)
+
+WHGH1_6 <- WHGH1 %>%
+  mutate(Date_Time = as.POSIXct(Date_Time, format = "%Y-%m-%dT%H:%M:%OSZ", tz = "UTC")) %>% # Convert to POSIXct
+  filter(year(Date_Time) >= 2010 & year(Date_Time) <= 2014,
+         month(Date_Time) == 6)
+
+WHGH1_5 <- WHGH1 %>%
+  mutate(Date_Time = as.POSIXct(Date_Time, format = "%Y-%m-%dT%H:%M:%OSZ", tz = "UTC")) %>% # Convert to POSIXct
+  filter(year(Date_Time) >= 2012 & year(Date_Time) <= 2016,
+         month(Date_Time) == 5)
+
+PHLI_6 <- PHLI %>%
+  mutate(Date_Time = as.POSIXct(Date_Time, format = "%Y-%m-%dT%H:%M:%OSZ", tz = "UTC")) %>% # Convert to POSIXct
+  filter(year(Date_Time) >= 2014 & year(Date_Time) <= 2018,
+         month(Date_Time) == 6)
+```
+
+```{r}
+datasets <- list(MKAH1_5, PLRH1_6, POPH1_8, WHGH1_3, WHGH1_6, WHGH1_5, PHLI_6)
+avg_temp <- sapply(datasets, function(data) mean(data$air_temp_set_1, na.rm = TRUE))
+  
 for (i in c(1:7)) {
   id_temp <- df %>%
     filter(fire_event_ID == i)
 
   p <- ggplot(id_temp, aes(x = Date_Time, y = air_temp_set_1)) +
           geom_line(size = 1) +
+          geom_hline(yintercept = avg_temp[i], color = "blue", linetype = "dashed", size = 0.8) +
           labs(title = paste("Temperature for Fire Event", i),
                x = "Date Time",
                y = "Temperature") +
           theme_minimal()
-  plot_list[[i]] <- p
+  ggsave(filename = paste0("Temperature", i, ".png"), plot = p, width = 8, height = 6)
 }
-do.call(grid.arrange, c(plot_list, ncol = 2))
 ```
+
 ```{r}
-plot_list <- list()
+avg_humid <- sapply(datasets, function(data) mean(data$relative_humidity_set_1, na.rm = TRUE))
 for (i in c(1:7)) {
   id_temp <- df %>%
     filter(fire_event_ID == i)
 
   p <- ggplot(id_temp, aes(x = Date_Time, y = relative_humidity_set_1)) +
           geom_line(size = 1) +
+          geom_hline(yintercept = avg_humid[i], color = "blue", linetype = "dashed", size = 0.8)+
           labs(title = paste("Relative Humidity for Fire Event", i),
                x = "Date Time",
                y = "Humidity") +
           theme_minimal()
-  plot_list[[i]] <- p
+  ggsave(filename = paste0("Humidity", i, ".png"), plot = p, width = 8, height = 6)
 }
-do.call(grid.arrange, c(plot_list, ncol = 2))
 ```
+
 ```{r}
-plot_list <- list()
+avg_wind <- sapply(datasets, function(data) mean(data$wind_speed_set_1, na.rm = TRUE))
 for (i in c(1:7)) {
   id_temp <- df %>%
     filter(fire_event_ID == i)
 
   p <- ggplot(id_temp, aes(x = Date_Time, y = wind_speed_set_1)) +
           geom_line(size = 1) +
+          geom_hline(yintercept = avg_wind[i], color = "blue", linetype = "dashed", size = 0.8)+
           labs(title = paste("Wind Speed for Fire Event", i),
                x = "Date Time",
                y = "Speed") +
           theme_minimal()
-  plot_list[[i]] <- p
+  ggsave(filename = paste0("Wind Speed", i, ".png"), plot = p, width = 8, height = 6)
 }
-do.call(grid.arrange, c(plot_list, ncol = 2))
 ```
-add some weather data before fire date, add average weather information for the last five years for the specific month
+
