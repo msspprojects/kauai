@@ -13,6 +13,7 @@ library(sf)
 library(gridExtra)
 library(plotly)
 library(lubridate)
+library(ggcorrplot)
 ```
 
 ```{r}
@@ -76,9 +77,13 @@ df <- df %>%
 colSums(is.na(df))
 ```
 ```{r}
-df <- df[, colSums(is.na(df)) < 1000]
+df <- df[, colSums(is.na(df)) < 3000]
 colSums(is.na(df))
 ```
+```{r}
+# write_csv(df, "../data/final_data.csv")
+```
+
 ```{r}
 register_google(key = "AIzaSyBZLfJLv6FbqwjkkzLNeVt3H5LO35g0v20")
 
@@ -142,12 +147,12 @@ for (i in c(1:7)) {
 
   p <- ggplot(id_temp, aes(x = Date_Time, y = air_temp_set_1)) +
           geom_line(size = 1) +
-          geom_hline(yintercept = avg_temp[i], color = "blue", linetype = "dashed", size = 0.8) +
+          geom_hline(yintercept = avg_temp[i], color = "blue", linetype = "dashed", linewidth = 0.8) +
           labs(title = paste("Temperature for Fire Event", i),
                x = "Date Time",
                y = "Temperature") +
           theme_minimal()
-  ggsave(filename = paste0("Temperature", i, ".png"), plot = p, width = 8, height = 6)
+  ggsave(filename = paste0("www/Temperature", i, ".png"), plot = p, width = 8, height = 6)
 }
 ```
 
@@ -158,13 +163,13 @@ for (i in c(1:7)) {
     filter(fire_event_ID == i)
 
   p <- ggplot(id_temp, aes(x = Date_Time, y = relative_humidity_set_1)) +
-          geom_line(size = 1) +
+          geom_line(linewidth = 1) +
           geom_hline(yintercept = avg_humid[i], color = "blue", linetype = "dashed", size = 0.8)+
           labs(title = paste("Relative Humidity for Fire Event", i),
                x = "Date Time",
                y = "Humidity") +
           theme_minimal()
-  ggsave(filename = paste0("Humidity", i, ".png"), plot = p, width = 8, height = 6)
+  ggsave(filename = paste0("www/Humidity", i, ".png"), plot = p, width = 8, height = 6)
 }
 ```
 
@@ -176,12 +181,92 @@ for (i in c(1:7)) {
 
   p <- ggplot(id_temp, aes(x = Date_Time, y = wind_speed_set_1)) +
           geom_line(size = 1) +
-          geom_hline(yintercept = avg_wind[i], color = "blue", linetype = "dashed", size = 0.8)+
+          geom_hline(yintercept = avg_wind[i], color = "blue", linetype = "dashed", linewidth = 0.8)+
           labs(title = paste("Wind Speed for Fire Event", i),
                x = "Date Time",
                y = "Speed") +
           theme_minimal()
-  ggsave(filename = paste0("Wind Speed", i, ".png"), plot = p, width = 8, height = 6)
+  ggsave(filename = paste0("www/WindSpeed", i, ".png"), plot = p, width = 8, height = 6)
 }
 ```
+
+```{r}
+df$fire_event_ID <- as.factor(df$fire_event_ID)
+numeric_df <- df %>%
+  select(where(is.numeric))
+
+# Compute the correlation matrix
+correlation_matrix <- cor(numeric_df, use = "pairwise.complete.obs")
+
+# Visualize the correlation matrix
+cor_plot <- ggcorrplot(correlation_matrix,
+           type = "lower",
+           lab = TRUE,
+           lab_size = 2, 
+           colors = c("#6D9EC1", "white", "#E46726"),
+           title = "Correlation Matrix of Weather Variables",
+           tl.cex = 8,
+           tl.srt = 45)
+ggsave(
+  filename = "www/correlationplot.png", # Replace with your folder path
+  plot = cor_plot,
+  width = 8,   
+  height = 6
+)
+```
+```{r}
+df_selected <- df %>%
+  select(-c(fire_event_ID, Station_ID, Date_Time, start_date, end_date, closest_station, pressure_change_code_set_1, lattitude, longitude, metar_set_1, weather_condition_set_1d, pressure_set_1d))
+
+df_selected$sea_level_pressure_set_1d <- as.numeric(df_selected$sea_level_pressure_set_1d)
+
+df_selected <- df_selected %>%
+  mutate(across(where(is.character), as.factor))
+
+model1 <- lm(acres~., data = df_selected)
+summary(model1)
+```
+```{r}
+model2 <- lm(acres~air_temp_set_1+wind_speed_set_1+wind_direction_set_1+wind_gust_set_1+dew_point_temperature_set_1d, data = df_selected)
+summary(model2)
+```
+```{r}
+model3 <- lm(acres~air_temp_set_1+wind_direction_set_1+dew_point_temperature_set_1d, data = df_selected)
+summary(model3)
+```
+```{r}
+predictions <- predict(model1, type = "response")
+mse <- mean((df_selected$acres - predictions)^2)
+print(mse)
+
+predictions <- predict(model2, type = "response")
+mse <- mean((df_selected$acres - predictions)^2)
+print(mse)
+
+predictions <- predict(model3, type = "response")
+mse <- mean((df_selected$acres - predictions)^2)
+print(mse)
+```
+model2 gives us the best results, which means that the important predictors are air temperature, wind direction and dew point temperature.
+
+Use random forest to verify the results:
+```{r}
+# Load necessary library
+library(xgboost)
+df_selected <- df_selected[, colSums(is.na(df_selected)) < 1000]
+df_selected <- na.omit(df_selected)
+
+# Prepare data
+x <- model.matrix(acres ~ . - 1, data = df_selected)  # Create design matrix
+y <- df_selected$acres
+
+# Train XGBoost model
+xgb_model <- xgboost(data = x, label = y, nrounds = 100, objective = "reg:squarederror")
+
+# Feature importance
+importance_matrix <- xgb.importance(feature_names = colnames(x), model = xgb_model)
+xgb.plot.importance(importance_matrix)
+```
+
+
 
