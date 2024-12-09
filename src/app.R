@@ -117,7 +117,18 @@ Despite these efforts, the island remains at risk, and continued vigilance and a
       tabItem(tabName = "fire_info",
               tabsetPanel(
                 tabPanel("Fire Causes and Risks",
-                         h2("Main Causes and Risks of Fire on Kauai Island")),
+                         h2("Main Causes and Risks of Fire on Kauai Island"),
+                         p("Kauaʻi, located in the northernmost part of the Hawaiian Islands, is home to Mount Waiʻaleʻale in its center, one of the wettest places on Earth. 
+                           
+                          However, drier coastal areas, where wildfires typically occur, are more vulnerable due to the presence of dry brush and vegetation.
+                           
+                           This vegetation is a rusult of massive wet seasons on Kua'i which create lots of fuel for these fires to burn.", style = "font-size: 18px;" 
+                           
+                           
+                         ), p("Higher concentrations of fire ignitions  are evident in the southern and eastern coastal areas. These regions are more prone to wildfires due to a combination of factors such as dry vegetation, human activities, and proximity to urban areas.
+
+In contrast, inland areas and regions in the northern parts of the island exhibit fewer fire ignitions, possibly due to lower population density and different environmental conditions.
+", style = "font-size: 18px;")),
                 tabPanel("Fire Events Location on Map",
                          leafletOutput("fire_map", height = "500px")),
                 tabPanel("Fire Event EDA",
