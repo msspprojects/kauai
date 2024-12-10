@@ -15,9 +15,9 @@ ui <- dashboardPage(
   dashboardSidebar(
     sidebarMenu(
       menuItem("Welcome", tabName = "welcome", icon = icon("home")),
-      menuItem("Kauai Overview", tabName = "kauai_overview", icon = icon("map")),
+      menuItem("Overview of Kauai", tabName = "kauai_overview", icon = icon("map")),
       menuItem("Fire Information", tabName = "fire_info", icon = icon("info-circle")),
-      menuItem("Modeling and Analysis", tabName = "fire_model", icon = icon("info-circle"))
+      menuItem("Modeling and Analysis", tabName = "fire_model", icon = icon("lightbulb"))
     )
   ),
   
