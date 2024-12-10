@@ -120,7 +120,11 @@ ui <- dashboardPage(
                          h2("Model Comparison Table"),
                          tableOutput("mse_table")),
                 tabPanel("Validation of Important Predictors Using XGBoost",
-                         img(src = "xgboostoutput.png", width = "100%"))
+                         img(src = "xgboostoutput.png", width = "100%"),
+                         h2("General Introduction to XGBoost"),
+                         p("XGBoost is a powerful machine learning method that builds a series of decision trees to make predictions. Each new tree in the sequence tries to improve upon the errors of the previous trees, creating a strong overall model. It uses a technique called “gradient boosting,” where each tree is built using information about how the previous trees performed, gradually reducing errors."),
+                         h2("What is this importance score?"),
+                         p("It is a metric called 'Gain', 'Gain' measures the average improvement in accuracy or reduction in error brought by each feature’s splits. A higher gain means that when the model used that feature for splitting, it led to a more significant improvement in the model’s predictions. Features with high gain values are considered more important because they are more effective at reducing prediction errors."))
               )
           )
       )
