@@ -223,18 +223,31 @@ df_selected$sea_level_pressure_set_1d <- as.numeric(df_selected$sea_level_pressu
 df_selected <- df_selected %>%
   mutate(across(where(is.character), as.factor))
 
+df_selected <- df_selected[, colSums(is.na(df_selected)) < 1000]
+df_selected <- na.omit(df_selected)
+
 model1 <- lm(acres~., data = df_selected)
 summary(model1)
+plot(model1)
 ```
 ```{r}
-model2 <- lm(acres~air_temp_set_1+wind_speed_set_1+wind_direction_set_1+wind_gust_set_1+dew_point_temperature_set_1d, data = df_selected)
+model2 <- lm(acres~air_temp_set_1+wind_speed_set_1+wind_direction_set_1+dew_point_temperature_set_1d, data = df_selected)
 summary(model2)
 ```
 ```{r}
-model3 <- lm(acres~air_temp_set_1+wind_direction_set_1+dew_point_temperature_set_1d, data = df_selected)
+model3 <- lm(acres~air_temp_set_1+wind_direction_set_1+wind_speed_set_1, data = df_selected)
 summary(model3)
 ```
 ```{r}
+model0 <- lm(acres~1, data = df_selected)
+summary(model0)
+```
+
+```{r}
+predictions <- predict(model0, type = "response")
+mse <- mean((df_selected$acres - predictions)^2)
+print(mse)
+
 predictions <- predict(model1, type = "response")
 mse <- mean((df_selected$acres - predictions)^2)
 print(mse)
@@ -247,14 +260,13 @@ predictions <- predict(model3, type = "response")
 mse <- mean((df_selected$acres - predictions)^2)
 print(mse)
 ```
-model2 gives us the best results, which means that the important predictors are air temperature, wind direction and dew point temperature.
+model1 gives us the best results, which means that the important predictors are air temperature, wind direction and dew point temperature.
 
-Use random forest to verify the results:
+Use xgboost to verify the results:
 ```{r}
 # Load necessary library
 library(xgboost)
-df_selected <- df_selected[, colSums(is.na(df_selected)) < 1000]
-df_selected <- na.omit(df_selected)
+
 
 # Prepare data
 x <- model.matrix(acres ~ . - 1, data = df_selected)  # Create design matrix
