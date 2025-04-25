@@ -162,7 +162,7 @@ server <- function(input, output, session) {
     c("Humidity6.png", "Temperature6.png", "WindSpeed6.png"),
     c("Humidity7.png", "Temperature7.png", "WindSpeed7.png")
   )
-  fire_data <- read_csv("../data/fires_range(in).csv")
+  fire_data <- read_csv("data/fires_range(in).csv")
   fire_data <- head(fire_data, -1)
   fire_data <- fire_data %>%
     mutate(eda_plots = eda_plot_paths[row_number()])

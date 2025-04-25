@@ -2,5 +2,5 @@
 .Rhistory
 .RData
 .Ruserdata
-*.2020-12-31.csv
+*.csv
 .DS_Store
